@@ -1,10 +1,14 @@
 import argparse
+import base64
 import datetime
 import logging
+import os
 import sys
 import traceback
+from typing import Generator
 
 from job_notifications import create_notifications
+import paramiko
 
 
 # Logging Config
@@ -29,6 +33,13 @@ parser.add_argument(
     default=None,
 )
 
+# Constants
+HOSTNAME = os.getenv("HOST")
+HOST_KEY = os.getenv("HOST_KEY")
+PORT = int(os.getenv("PORT"))
+USERNAME = os.getenv("USER")
+PASSWORD = os.getenv("PASS")
+REMOTE_DIR = os.getenv("REMOTE_DIR")
 
 # Globals
 args = parser.parse_args()
@@ -47,6 +58,30 @@ def _get_file_query_time() -> datetime.datetime:
 def main():
     query_time = _get_file_query_time()
     logger.info(f"Looking for files modified since {query_time}")
+
+    host_key = paramiko.RSAKey(
+        data=base64.b64decode(HOST_KEY)
+    )
+
+    host_lookup = f"[{HOSTNAME}]:{PORT}"
+
+    with paramiko.SSHClient() as ssh:
+        ssh.get_host_keys().add(
+            host_lookup,
+            "ssh-rsa",
+            host_key,
+        )
+        print(repr(HOSTNAME))
+        print(ssh.get_host_keys().keys())
+        ssh.connect(
+            hostname=HOSTNAME,
+            port=PORT,
+            username=USERNAME,
+            password=PASSWORD,
+        )
+
+        with ssh.open_sftp() as sftp:
+            logger.info(sftp.listdir(REMOTE_DIR))
 
 
 if __name__ == "__main__":
