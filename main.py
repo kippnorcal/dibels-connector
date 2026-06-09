@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import logging
 import sys
 import traceback
@@ -22,9 +23,9 @@ logging.basicConfig(
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "--start-date",
-    help="Start Date: format YYYY-MM-DD",
-    dest="start_date",
+    "--since-date",
+    help="Date to search - Date since file was last modified (format YYYY-MM-DD)",
+    dest="since_date",
     default=None,
 )
 
@@ -35,8 +36,17 @@ logger = logging.getLogger(__name__)
 notifications = create_notifications("Dibels Connector", "mailgun", logs="app.log")
 
 
+def _get_file_query_time() -> datetime.datetime:
+    """Generates a timestamp for searching files on SFTP server. Any files modified after this timestamp will be
+    uploaded to Google Cloud Storage"""
+    if args.since_date is None:
+        return datetime.datetime.now() - datetime.timedelta(hours=24)
+    return datetime.datetime.strptime(args.since_date, "%Y-%m-%d")
+
+
 def main():
-    pass
+    query_time = _get_file_query_time()
+    logger.info(f"Looking for files modified since {query_time}")
 
 
 if __name__ == "__main__":
