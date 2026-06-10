@@ -33,6 +33,12 @@ parser.add_argument(
     dest="since_date",
     default=None,
 )
+parser.add_argument(
+    "--get-all",
+    help="Get all files from SFTP",
+    dest="get_all",
+    action="store_true",
+)
 
 # Constants
 HOSTNAME = os.getenv("HOST")
