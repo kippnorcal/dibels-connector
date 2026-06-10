@@ -78,9 +78,17 @@ def _extract_year(file_name: str) -> str:
 
 
 def main():
-    query_time = _get_file_query_time()
-    logger.info(f"Looking for files modified since {query_time}")
-    query_epoch = query_time.timestamp()
+
+    cloud_storage = CloudStorageClient()
+
+    if not args.get_all:
+        query_time = _get_file_query_time()
+        logger.info(f"Looking for files modified since {query_time}")
+        query_epoch = query_time.timestamp()
+    else:
+        logger.info("Getting all files from server")
+        notifications.extend_job_name(" - get all files")
+        query_epoch = 0
 
     host_key = paramiko.RSAKey(
         data=base64.b64decode(HOST_KEY)
@@ -88,12 +96,15 @@ def main():
 
     host_lookup = f"[{HOSTNAME}]:{PORT}"
 
+    file_count = 0
+
     with paramiko.SSHClient() as ssh:
         ssh.get_host_keys().add(
             host_lookup,
             "ssh-rsa",
             host_key,
         )
+
         ssh.connect(
             hostname=HOSTNAME,
             port=PORT,
@@ -125,8 +136,8 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-        # notifications.notify()
+        notifications.notify()
     except Exception as e:
         logging.exception(e)
         stack_trace = traceback.format_exc()
-        # notifications.notify(error_message=stack_trace)
+        notifications.notify(error_message=stack_trace)
