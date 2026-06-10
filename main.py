@@ -47,6 +47,9 @@ PORT = os.getenv("PORT")
 USERNAME = os.getenv("USER")
 PASSWORD = os.getenv("PASS")
 REMOTE_DIR = os.getenv("REMOTE_DIR")
+CLOUD_PATH = os.getenv("CLOUD_STORAGE_BASE_PATH")
+BUCKET = os.getenv("BUCKET")
+REGEX_PATTERN = r'(\d{4}-\d{4})'
 
 # Globals
 args = parser.parse_args()
