@@ -99,8 +99,24 @@ def main():
         )
 
         with ssh.open_sftp() as sftp:
-            for attribute in sftp.listdir_iter(REMOTE_DIR):
-                pass
+            # List files in the remote directory
+            for attribute in sftp.listdir_attr(REMOTE_DIR):
+                logger.info(f"Checking:  {attribute.filename}")
+                if attribute.st_mtime > query_epoch:
+                    remote_path = f"{REMOTE_DIR}/{attribute.filename}"
+                    local_path = f"/code/data/{attribute.filename}"
+                    logger.info(f"Copying {remote_path} to {local_path}")
+                    sftp.get(remote_path, local_path)
+                    df = pd.read_csv(local_path, sep=",", quotechar='"', doublequote=True, dtype=str, header=0)
+
+                    year = _extract_year(attribute.filename)
+                    blob_name = f"{CLOUD_PATH}/{year}/{attribute.filename}"
+                    logger.info(f"Uploading to {blob_name}")
+                    cloud_storage.load_dataframe_to_cloud_as_csv(BUCKET, blob_name, df)
+                    file_count += 1
+
+
+    logger.info(f"Loaded {file_count} file(s) to cloud storage")
 
 
 if __name__ == "__main__":
