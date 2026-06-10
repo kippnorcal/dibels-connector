@@ -1,6 +1,7 @@
 import argparse
 import base64
 import datetime
+from io import BytesIO
 import logging
 import os
 import sys
@@ -36,7 +37,7 @@ parser.add_argument(
 # Constants
 HOSTNAME = os.getenv("HOST")
 HOST_KEY = os.getenv("HOST_KEY")
-PORT = int(os.getenv("PORT"))
+PORT = os.getenv("PORT")
 USERNAME = os.getenv("USER")
 PASSWORD = os.getenv("PASS")
 REMOTE_DIR = os.getenv("REMOTE_DIR")
@@ -51,13 +52,14 @@ def _get_file_query_time() -> datetime.datetime:
     """Generates a timestamp for searching files on SFTP server. Any files modified after this timestamp will be
     uploaded to Google Cloud Storage"""
     if args.since_date is None:
-        return datetime.datetime.now() - datetime.timedelta(hours=24)
+        return datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(hours=24)
     return datetime.datetime.strptime(args.since_date, "%Y-%m-%d")
 
 
 def main():
     query_time = _get_file_query_time()
     logger.info(f"Looking for files modified since {query_time}")
+    query_epoch = query_time.timestamp()
 
     host_key = paramiko.RSAKey(
         data=base64.b64decode(HOST_KEY)
@@ -71,8 +73,6 @@ def main():
             "ssh-rsa",
             host_key,
         )
-        print(repr(HOSTNAME))
-        print(ssh.get_host_keys().keys())
         ssh.connect(
             hostname=HOSTNAME,
             port=PORT,
@@ -81,14 +81,15 @@ def main():
         )
 
         with ssh.open_sftp() as sftp:
-            logger.info(sftp.listdir(REMOTE_DIR))
+            for attribute in sftp.listdir_iter(REMOTE_DIR):
+                pass
 
 
 if __name__ == "__main__":
     try:
         main()
-        notifications.notify()
+        # notifications.notify()
     except Exception as e:
         logging.exception(e)
         stack_trace = traceback.format_exc()
-        notifications.notify(error_message=stack_trace)
+        # notifications.notify(error_message=stack_trace)
