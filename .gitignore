@@ -219,3 +219,5 @@ __marimo__/
 
 # Pycharm Environment
 .idea
+
+big_query_credentials.json
