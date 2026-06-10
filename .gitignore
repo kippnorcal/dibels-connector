@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Pycharm Environment
+.idea
+
+big_query_credentials.json
