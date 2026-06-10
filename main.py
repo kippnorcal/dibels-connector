@@ -57,7 +57,7 @@ REGEX_PATTERN = r'(\d{4}-\d{4})'
 # Globals
 args = parser.parse_args()
 logger = logging.getLogger(__name__)
-notifications = create_notifications("Dibels Connector", "mailgun", logs="app.log")
+notifications = create_notifications("DIBLES Connector", "mailgun", logs="app.log")
 
 
 def _get_file_query_time() -> datetime.datetime:
