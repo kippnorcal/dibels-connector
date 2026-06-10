@@ -62,6 +62,15 @@ def _get_file_query_time() -> datetime.datetime:
     return datetime.datetime.strptime(args.since_date, "%Y-%m-%d")
 
 
+def _extract_year(file_name: str) -> str:
+    year_regex = re.compile(REGEX_PATTERN)
+    y = year_regex.search(file_name)
+    year = y.group()
+    if year is None:
+        raise ValueError("A year in YYYY-YYYY format not found in filename.")
+    return year
+
+
 def main():
     query_time = _get_file_query_time()
     logger.info(f"Looking for files modified since {query_time}")
