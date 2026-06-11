@@ -97,6 +97,7 @@ def main():
     host_lookup = f"[{HOSTNAME}]:{PORT}"
 
     file_count = 0
+    file_download_count = 0
 
     with paramiko.SSHClient() as ssh:
         ssh.get_host_keys().add(
@@ -115,11 +116,11 @@ def main():
         with ssh.open_sftp() as sftp:
             # List files in the remote directory
             for attribute in sftp.listdir_attr(REMOTE_DIR):
-                logger.info(f"Checking:  {attribute.filename}")
+                file_count += 1
                 if attribute.st_mtime > query_epoch:
                     remote_path = f"{REMOTE_DIR}/{attribute.filename}"
                     local_path = f"/code/data/{attribute.filename}"
-                    logger.info(f"Copying {remote_path} to {local_path}")
+                    logger.info(f"Copying {remote_path} to local dir")
                     sftp.get(remote_path, local_path)
                     df = pd.read_csv(local_path, sep=",", quotechar='"', doublequote=True, dtype=str, header=0)
 
@@ -127,10 +128,11 @@ def main():
                     blob_name = f"{CLOUD_PATH}/{year}/{attribute.filename}"
                     logger.info(f"Uploading to {blob_name}")
                     cloud_storage.load_dataframe_to_cloud_as_csv(BUCKET, blob_name, df)
-                    file_count += 1
+                    file_download_count += 1
 
 
-    logger.info(f"Loaded {file_count} file(s) to cloud storage")
+    logger.info(f"Evaluated {file_count} file(s) on server")
+    logger.info(f"Loaded {file_download_count} file(s) to cloud storage")
 
 
 if __name__ == "__main__":
