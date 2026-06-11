@@ -41,6 +41,11 @@ FAILURE_EMAIL=
 ### Cloud Storage Credentials
 Save credential file in the project's root dir and make sure it's name matches the `GOOGLE_APPLICATION_CREDENTIALS` variable in the `.env` file.
 
+### Year Regex Variable
+The automation will try to identify the year of the file by looking for a `YYYY-YYYY` format in the file name. The regex pattern for this is in a variable named `REGEX_PATTERN` near the top of the `main.py` file.
+
+The year identified by the regex will be used in the file path on Google Cloud Storage to separate files by year. If the naming convention ever changes, and the regex fails to find a year, a `ValueError` will be raised. Update the regex pattern to fix this. [Regex101](https://regex101.com/) is a great site for testing patterns.
+
 ## Build and Run Job
 
 Build the Docker image by running the following command in the project's root:
