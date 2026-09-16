@@ -36,12 +36,6 @@ parser.add_argument(
     dest="since_date",
     default=None,
 )
-parser.add_argument(
-    "--get-all",
-    help="Get all files from SFTP",
-    dest="get_all",
-    action="store_true",
-)
 
 # Constants
 HOSTNAME = os.getenv("HOST")
@@ -81,14 +75,9 @@ def main():
 
     cloud_storage = CloudStorageClient()
 
-    if not args.get_all:
-        query_time = _get_file_query_time()
-        logger.info(f"Looking for files modified since {query_time}")
-        query_epoch = query_time.timestamp()
-    else:
-        logger.info("Getting all files from server")
-        notifications.extend_job_name(" - get all files")
-        query_epoch = 0
+    query_time = _get_file_query_time()
+    logger.info(f"Looking for files modified since {query_time}")
+    query_epoch = query_time.timestamp()
 
     host_key = paramiko.RSAKey(
         data=base64.b64decode(HOST_KEY)
