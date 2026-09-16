@@ -1,5 +1,8 @@
 # DIBELS connector
-Automation for fetching DIBELS files from sftp server and loading to Google Cloud Storage.
+Automation for fetching DIBELS files from sftp server and loading to Google Cloud Storage (GCS).
+
+# Overview
+This automation will fetch the most recent file from the DIBELS sftp server and load that file to GCS. Every time the automation is run, the exiting file on GCS is overwritten with the latest file.
 
 ## Dependencies
 - Python
