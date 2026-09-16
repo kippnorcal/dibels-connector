@@ -36,12 +36,6 @@ parser.add_argument(
     dest="since_date",
     default=None,
 )
-parser.add_argument(
-    "--get-all",
-    help="Get all files from SFTP",
-    dest="get_all",
-    action="store_true",
-)
 
 # Constants
 HOSTNAME = os.getenv("HOST")
@@ -81,14 +75,9 @@ def main():
 
     cloud_storage = CloudStorageClient()
 
-    if not args.get_all:
-        query_time = _get_file_query_time()
-        logger.info(f"Looking for files modified since {query_time}")
-        query_epoch = query_time.timestamp()
-    else:
-        logger.info("Getting all files from server")
-        notifications.extend_job_name(" - get all files")
-        query_epoch = 0
+    query_time = _get_file_query_time()
+    logger.info(f"Looking for files modified since {query_time}")
+    query_epoch = query_time.timestamp()
 
     host_key = paramiko.RSAKey(
         data=base64.b64decode(HOST_KEY)
@@ -118,14 +107,16 @@ def main():
             for attribute in sftp.listdir_attr(REMOTE_DIR):
                 file_count += 1
                 if attribute.st_mtime > query_epoch:
+                    year = _extract_year(attribute.filename)
+                    file_name = f"dibels_progress_monitoring_{year}.csv"
                     remote_path = f"{REMOTE_DIR}/{attribute.filename}"
-                    local_path = f"/code/data/{attribute.filename}"
+                    local_path = f"/code/data/{file_name}"
+
                     logger.info(f"Copying {remote_path} to local dir")
                     sftp.get(remote_path, local_path)
                     df = pd.read_csv(local_path, sep=",", quotechar='"', doublequote=True, dtype=str, header=0)
 
-                    year = _extract_year(attribute.filename)
-                    blob_name = f"{CLOUD_PATH}/{year}/{attribute.filename}"
+                    blob_name = f"{CLOUD_PATH}/{year}/{file_name}"
                     logger.info(f"Uploading to {blob_name}")
                     cloud_storage.load_dataframe_to_cloud_as_csv(BUCKET, blob_name, df)
                     file_download_count += 1
