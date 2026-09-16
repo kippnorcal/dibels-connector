@@ -107,14 +107,16 @@ def main():
             for attribute in sftp.listdir_attr(REMOTE_DIR):
                 file_count += 1
                 if attribute.st_mtime > query_epoch:
+                    year = _extract_year(attribute.filename)
+                    file_name = f"dibels_progress_monitoring_{year}.csv"
                     remote_path = f"{REMOTE_DIR}/{attribute.filename}"
-                    local_path = f"/code/data/{attribute.filename}"
+                    local_path = f"/code/data/{file_name}"
+
                     logger.info(f"Copying {remote_path} to local dir")
                     sftp.get(remote_path, local_path)
                     df = pd.read_csv(local_path, sep=",", quotechar='"', doublequote=True, dtype=str, header=0)
 
-                    year = _extract_year(attribute.filename)
-                    blob_name = f"{CLOUD_PATH}/{year}/{attribute.filename}"
+                    blob_name = f"{CLOUD_PATH}/{year}/{file_name}"
                     logger.info(f"Uploading to {blob_name}")
                     cloud_storage.load_dataframe_to_cloud_as_csv(BUCKET, blob_name, df)
                     file_download_count += 1
