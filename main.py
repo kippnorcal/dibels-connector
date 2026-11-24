@@ -65,10 +65,9 @@ def _get_file_query_time() -> datetime.datetime:
 def _extract_year(file_name: str) -> str:
     year_regex = re.compile(REGEX_PATTERN)
     y = year_regex.search(file_name)
-    year = y.group()
-    if year is None:
+    if y is None:
         raise ValueError("A year in YYYY-YYYY format not found in filename.")
-    return year
+    return y.group()
 
 
 def main():
