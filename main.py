@@ -14,6 +14,8 @@ from job_notifications import create_notifications
 import pandas as pd
 import paramiko
 
+from config import DATA_CONFIG
+
 
 # Logging Config
 logging.basicConfig(
@@ -37,19 +39,29 @@ parser.add_argument(
     default=None,
 )
 
+parser.add_argument(
+    "--benchmark-monitoring",
+    help="Load Benchmark Monitoring files instead of Progress Monitoring",
+    dest="benchmark_monitoring",
+    action="store_true",
+)
+
+args = parser.parse_args()
+
 # Constants
+DATA_TYPE = "Benchmark Monitoring" if args.benchmark_monitoring else "Progress Monitoring"
 HOSTNAME = os.getenv("HOST")
 HOST_KEY = os.getenv("HOST_KEY")
 PORT = os.getenv("PORT")
 USERNAME = os.getenv("USER")
 PASSWORD = os.getenv("PASS")
-REMOTE_DIR = os.getenv("REMOTE_DIR")
-CLOUD_PATH = os.getenv("CLOUD_STORAGE_BASE_PATH")
+REMOTE_DIR = DATA_CONFIG[DATA_TYPE]["REMOTE_DIR"]
+CLOUD_PATH = DATA_CONFIG[DATA_TYPE]["CLOUD_STORAGE_BASE_PATH"]
+FILE_PREFIX = DATA_CONFIG[DATA_TYPE]["FILE_PREFIX"]
 BUCKET = os.getenv("BUCKET")
 REGEX_PATTERN = r'(\d{4}-\d{4})'
 
 # Globals
-args = parser.parse_args()
 logger = logging.getLogger(__name__)
 notifications = create_notifications("DIBLES Connector", "mailgun", logs="app.log")
 
@@ -65,14 +77,14 @@ def _get_file_query_time() -> datetime.datetime:
 def _extract_year(file_name: str) -> str:
     year_regex = re.compile(REGEX_PATTERN)
     y = year_regex.search(file_name)
-    year = y.group()
-    if year is None:
+    if y is None:
         raise ValueError("A year in YYYY-YYYY format not found in filename.")
-    return year
+    return y.group()
 
 
 def main():
 
+    logger.info(f"Running {DATA_TYPE} load")
     cloud_storage = CloudStorageClient()
 
     query_time = _get_file_query_time()
@@ -108,7 +120,7 @@ def main():
                 file_count += 1
                 if attribute.st_mtime > query_epoch:
                     year = _extract_year(attribute.filename)
-                    file_name = f"dibels_progress_monitoring_{year}.csv"
+                    file_name = f"{FILE_PREFIX}_{year}.csv"
                     remote_path = f"{REMOTE_DIR}/{attribute.filename}"
                     local_path = f"/code/data/{file_name}"
 
