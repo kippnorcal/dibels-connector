@@ -1,10 +1,9 @@
 name: Build on Server
 
 on:
-  workflow_run:
-    workflows: ["tests"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
 jobs:
   remote-build:
     runs-on: ubuntu-latest
